@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>武汉VR赛-青年突击队</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+    <link rel="stylesheet" href="main.css"/>
+</head>
+<body>
+<div class="main">
+    <h1 id="title">武汉历史建筑VR漫游系统</h1>
+    <button id="Internet" class="Internet">网页端</button>
+    <button id="VR" class="VR">VR</button>
+</div>
+<div class="loading" id="loading">
+    <div class="load">
+    </div>
+    <div class="loadText">Loading...</div>
+    <div id="progress" class="progress">
+        <div class="shadow position-center font"></div>
+        <div class="bar position-center font"></div>
+    </div>
+</div>
+<div id="pointer_center">
+</div>
+<video id="video1" autoplay muted controls class="video" loop="loop">
+    <source src="./素材/Videos/Video1.mp4">
+</video>
+<video id="video2" autoplay muted controls class="video" loop="loop" >
+    <source src="./素材/Videos/Video2.mp4">
+</video>
+<script src="./expend/gsap.js"></script>
+<script type="module">
+    import "./expend/main.js";
+</script>
+</body>
+</html>
