@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>FF15</title>
+</head>
+<style>
+	body {
+		margin: 0;
+		overflow: hidden;
+	}
+</style>
+<body>
+
+<script type="module">
+
+    import * as THREE from "../build/three.module.js";
+	import { VRButton } from '../jsm/webxr/VRButton.js';
+    import {TWEEN} from "../jsm/libs/tween.module.min.js";
+	let camera, scene, renderer, sphere, clock,direction,plane;
+	var sceneCounter =1;
+	var group = new THREE.Group();
+	clock = new THREE.Clock();
+	init();
+	animate();
+
+
+	function init() {
+		clock = new THREE.Clock();
+		scene = new THREE.Scene();
+		scene.background = new THREE.Color( 0x101010 );
+
+		const light = new THREE.AmbientLight( 0xffffff, 1 );
+		scene.add( light );
+
+		camera = new THREE.PerspectiveCamera( 70, window.innerWidth / window.innerHeight, 1, 2000 );
+		camera.position.set(0, 0, 0); //设置相机位置
+		camera.lookAt(new THREE.Vector3(0, 0, 0));
+		group.add(camera);
+		scene.add(group);
+
+		const panoSphereGeo = new THREE.SphereGeometry( 6, 256, 256 );
+		const panoSphereMat = new THREE.MeshStandardMaterial( {
+			side: THREE.BackSide,
+			displacementScale: - 4.0
+		} );
+
+		sphere = new THREE.Mesh( panoSphereGeo, panoSphereMat );
+		 sphere.rotation.y=Math.PI/2;
+		textureLoad(sceneCounter);
+
+		const planeGeometry = new THREE.PlaneGeometry(0.3,0.15,1,1);
+		const textureLoader = new THREE.TextureLoader();//贴图加载器
+		const planeMaterial = new THREE.MeshStandardMaterial({
+			map: textureLoader.load('./图/next-scene.png'),
+			opacity:1,
+			transparent:true,
+			depthWrite:false,
+			// depthTest:false,
+		});
+		plane = new THREE.Mesh(planeGeometry,planeMaterial);
+		plane.name = 'planeNext';
+		plane.position.x =0;
+		plane.position.y =-0.4;
+		plane.position.z = -2;
+		scene.add(plane);
+
+		renderer = new THREE.WebGLRenderer();
+		renderer.setPixelRatio( window.devicePixelRatio );   //像素比
+		renderer.setSize( window.innerWidth, window.innerHeight );
+		renderer.xr.enabled = true;
+		renderer.xr.setReferenceSpaceType( 'local' );
+		document.body.appendChild( renderer.domElement );
+
+		document.body.appendChild( VRButton.createButton( renderer ) );
+
+		window.addEventListener( 'resize', onWindowResize );
+
+		createSprite(0.65, 1.3, './图/返回场景.png','Back');
+		createSprite(0, -1.32, './图/left.png','Left');
+		createSprite(0, 1.32, './图/right.png','Right');
+	}
+    // function  OpacityTween(obj){
+	//     const tween = new TWEEN.Tween(obj.material).to({opacity: 1},1000);
+    //     tween.start();
+    // }
+	function textureLoad(count) {
+		const manager = new THREE.LoadingManager();
+		const loader = new THREE.TextureLoader(manager);
+		loader.load('./VR' + count + '.jpg', function (texture) {
+			texture.minFilter = THREE.NearestFilter;
+			texture.generateMipmaps = false;
+			sphere.material.map = texture;
+			sphere.material.side = THREE.DoubleSide;
+			// sphere.material.transparent = true;
+            sphere.material.opacity =1;
+
+		});
+		manager.onLoad = function () {
+            // OpacityTween(sphere);
+			scene.add(sphere);
+		};
+		if (count === 2) {
+			setTimeout(() => {
+				sphere.rotation.y -= Math.PI /2 + 0.1;
+				sphere.rotation.z += 0.02;
+			}, 100)
+		}
+		if (count === 3) {
+			setTimeout(() => {
+				sphere.rotation.y = Math.PI / 2 + 0.3;
+                plane.position.x = 1.1;
+			}, 100)
+		}
+		if (count === 4) {
+			setTimeout(() => {
+                sphere.rotation.z = 0;
+				sphere.rotation.y = -Math.PI/2-0.3;
+                plane.position.x = -0.3;
+			}, 100)
+		}
+		if (count === 5) {
+			setTimeout(() => {
+				sphere.rotation.y = Math.PI / 2;
+				plane.position.z = 2;
+			}, 100)
+		}
+		sceneCounter++;
+	}
+	function onWindowResize() {
+		camera.aspect = window.innerWidth / window.innerHeight;
+		camera.updateProjectionMatrix();
+		renderer.setSize( window.innerWidth, window.innerHeight );
+	}
+	function animate() {
+		renderer.setAnimationLoop( render );
+	}
+	function render() {
+	    TWEEN.update();
+		renderer.render( scene, camera );
+	}
+	function createSprite(direction1,direction2,imgPath,directe) {
+		var textureLoader = new THREE.TextureLoader();
+		var spriteMaterial = new THREE.SpriteMaterial({
+			map: textureLoader.load(imgPath),
+            transparent:true
+		});
+		var sprite = new THREE.Sprite(spriteMaterial);
+		sprite.scale.set(0.15, 0.07, 0);
+		scene.updateMatrixWorld();
+		sprite.position.copy(camera.position)
+		sprite.position.z -=1;
+
+		sprite.position.y += direction1;
+		sprite.position.x += direction2;
+		sprite.name = 'sprite'+directe;
+		// gui.add(sprite.position,'x',-3,3,0.01).name(sprite.name + "x");
+        // gui.add(sprite.position,'y',-3,3,0.01).name(sprite.name + "y");
+        // gui.add(sprite.position,'z',-3,3,0.01).name(sprite.name + "z");
+		group.add(sprite);
+	}
+    function RotateTween(obj,angle) {
+	    let Angle = obj.rotation.y+angle;
+        const tween = new TWEEN.Tween(obj.rotation).to({y:Angle},1000);
+        tween.start();
+    }
+	function choose(event) {
+		var Sx = event.clientX; //鼠标单击位置横坐标
+		var Sy = event.clientY; //鼠标单击位置纵坐标
+		//屏幕坐标转WebGL标准设备坐标
+		var x = (Sx / window.innerWidth) * 2 - 1; //WebGL标准设备横坐标
+		var y = -(Sy / window.innerHeight) * 2 + 1; //WebGL标准设备纵坐标
+		var raycaster = new THREE.Raycaster();
+		raycaster.setFromCamera(new THREE.Vector2(x, y), camera);
+		var intersects = raycaster.intersectObjects(scene.children,true);
+		console.log("射线投射器返回的对象", intersects);
+		//比较对象名字
+		var keyRight ={name: "spriteRight",};
+		var keyLeft ={name: 'spriteLeft',};
+		var keyBack ={name: 'spriteBack',};
+		var keyNext ={name: 'planeNext',};
+		if (intersects.length > 0) {
+			if (intersects[0].object.name === keyRight.name) {
+                RotateTween(group,-0.5)
+			}
+
+			if (intersects[0].object.name === keyLeft.name) {
+			    RotateTween(group,0.5)
+			}
+			if (intersects[0].object.name === keyNext.name){
+				textureLoad(sceneCounter);
+			}
+			if (intersects[0].object.name === keyBack.name){
+				window.open("../main.html")
+			}
+		}
+	}
+	addEventListener('click', choose);
+
+</script>
+</body>
+</html>
